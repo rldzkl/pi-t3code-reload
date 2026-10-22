@@ -101,4 +101,13 @@ The disposable T3 fixture thread is archived, which stopped its Pi process, and 
 Two checks decide whether the package still works and is still needed.
 
 - GitHub Action `.github/workflows/upstream.yml` runs daily, on pushes and pull requests, and on demand. It runs the unit tests and real RPC tests against the latest Pi from npm. It fails if Pi adds an RPC `reload` command, because T3 Code could then reload Pi without this package. Scheduled and manual failures open or update the issue "Upstream compatibility check failed".
-- A weekly T3 scheduled task on the always-on VPS compares the latest Pi and T3 Code releases with the versions it last checked. When a version changes, it runs a real T3 check and reads the release notes for native reload support. It reports in its run thread and opens a GitHub issue when action is needed. Only the VPS's installed T3 version can be exercised.
+- A weekly T3 scheduled task on the always-on VPS (Mondays 02:00 UTC) compares the latest Pi and T3 Code releases, the installed versions, and the clone HEAD with `~/.local/state/pi-t3code-reload/last-check.json`. If nothing changed, it stops. Otherwise it runs both test suites against the installed and latest Pi. It also runs a real T3 check in the fixture project (`/t3-reload` twice, MCP before and after reload, and busy refusal), then reads release notes for native reload support. It reports in a new run thread in the VPS project and comments on or opens the issue "Weekly T3/Pi check: action needed" when something fails or the package may be obsolete. Only the VPS's installed T3 version can be exercised.
+
+VPS setup:
+- Clone: `/home/ubuntu/projects/misc/pi-t3code-reload`, registered as T3 project `mcp:4dde92f7-60a7-403b-8246-1e7ab806e5e4` with Claude Sonnet 5.5 as its default.
+- Fixture: `/home/ubuntu/projects/misc/pi-t3code-reload-fixture`, project `mcp:35cdb99b-1d8b-4c3f-8a3b-da9cbb31a1e9`. Its `.pi/settings.json` loads the clone, so global Pi settings on the VPS are unchanged. The directory is under an already-trusted Pi path.
+- Scheduled task: `scheduled-task:command:mcp:client%3Ae8f9c461-c501-42a4-a864-a406b1c3a66c:schedule-task:pi-t3code-reload-weekly-check-v1`.
+
+Validation on 2026-10-22:
+- The first GitHub Action run passed: latest Pi 1.4.0 from npm, 9/9 unit tests, 2/2 real RPC tests, 4 package files, and no Pi RPC reload. The issue step did not run; its search command was checked separately.
+- A manual run of the VPS task passed its full check against Pi 1.4.0 and T3 0.1.1 with the verdict "keep". It ran both test suites and every real T3 check, archived its fixture thread, and opened no issue. It recorded the clone HEAD with one wrong character, which was corrected; the task now writes state values from command output.
