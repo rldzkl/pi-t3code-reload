@@ -1,0 +1,47 @@
+{
+  "name": "pi-t3code-reload",
+  "version": "0.1.0",
+  "description": "Reload Pi from T3 Code with /t3-reload, without restarting the app.",
+  "license": "MIT",
+  "author": "Ridzki Atmaji",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rldzkl/pi-t3code-reload.git"
+  },
+  "homepage": "https://github.com/rldzkl/pi-t3code-reload#readme",
+  "bugs": {
+    "url": "https://github.com/rldzkl/pi-t3code-reload/issues"
+  },
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "t3-code",
+    "pi-extension"
+  ],
+  "files": [
+    "index.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "test": "node --test test/extension.test.mjs",
+    "test:rpc": "node --test test/rpc.test.mjs",
+    "pack:check": "npm pack --dry-run"
+  }
+}
