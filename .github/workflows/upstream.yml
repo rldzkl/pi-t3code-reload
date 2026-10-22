@@ -1,0 +1,51 @@
+name: Upstream compatibility
+
+# Tests against the latest Pi release daily, and flags Pi gaining its own RPC reload command,
+# which would let T3 Code reload Pi without this package.
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  latest-pi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Install latest Pi
+        run: |
+          npm install --global --ignore-scripts @earendil-works/pi-coding-agent@latest
+          PI_DIR="$(npm root --global)/@earendil-works/pi-coding-agent"
+          echo "PI_DIR=$PI_DIR" >> "$GITHUB_ENV"
+          echo "PI_TEST_CLI=$PI_DIR/dist/bundle/cli.js" >> "$GITHUB_ENV"
+          echo "PI_VERSION=$(node -p "require('$PI_DIR/package.json').version")" >> "$GITHUB_ENV"
+      - run: npm run test:rpc
+      - run: npm run pack:check
+      - name: Check whether Pi added its own RPC reload
+        run: |
+          if grep -q 'case "reload"' "$PI_DIR/dist/modes/rpc/rpc-mode.js" || grep -q '"type": "reload"' "$PI_DIR/docs/rpc-commands.md"; then
+            echo "::error::Pi $PI_VERSION has an RPC reload command. Check whether T3 Code uses it and this package is still needed."
+            exit 1
+          fi
+      - name: Open or update an issue
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Upstream compatibility check failed"
+          body="Pi ${PI_VERSION:-unknown}: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          number="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')"
+          if [ -n "$number" ]; then gh issue comment "$number" --body "$body"; else gh issue create --title "$title" --body "$body"; fi

@@ -91,9 +91,14 @@ The disposable T3 fixture thread is archived, which stopped its Pi process, and 
 
 - Untested: T3 on Linux or macOS.
 - Names: the GitHub repository and npm package are both `pi-t3code-reload`. On 2026-10-22, the repository name was unused under account `rldzkl`, and that npm name was unpublished.
-- npm publication requires the owner to log in to npm on this machine; `npm whoami` returned `ENEEDAUTH`.
-- After publication, consider switching the global install from the local path to `npm:pi-t3code-reload`.
 
 ## Release
 
-Version 0.1.0 has `private` removed and adds repository metadata. Publish it with `npm publish` after `npm run pack:check` confirms four files. Local removal uses `pi remove <source>`; already-loaded sessions need a restart to stop using the extension.
+`pi-t3code-reload@0.1.0` was published to npm on 2026-10-22, from commit `8d04afa` on https://github.com/rldzkl/pi-t3code-reload. pi.dev lists it at https://pi.dev/packages/pi-t3code-reload because it has the `pi-package` keyword. On this Windows device, the global Pi install now uses `npm:pi-t3code-reload`. Local removal uses `pi remove <source>`; already-loaded sessions need a restart to stop using the extension.
+
+## Maintenance
+
+Two checks decide whether the package still works and is still needed.
+
+- GitHub Action `.github/workflows/upstream.yml` runs daily, on pushes and pull requests, and on demand. It runs the unit tests and real RPC tests against the latest Pi from npm. It fails if Pi adds an RPC `reload` command, because T3 Code could then reload Pi without this package. Scheduled and manual failures open or update the issue "Upstream compatibility check failed".
+- A weekly T3 scheduled task on the always-on VPS compares the latest Pi and T3 Code releases with the versions it last checked. When a version changes, it runs a real T3 check and reads the release notes for native reload support. It reports in its run thread and opens a GitHub issue when action is needed. Only the VPS's installed T3 version can be exercised.
